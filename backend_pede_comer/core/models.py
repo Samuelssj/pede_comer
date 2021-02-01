@@ -1,8 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# Create your models here.
-
+# Create your models here
 
 class Endereco(models.Model):
 
@@ -18,7 +17,7 @@ class Endereco(models.Model):
 
 class Cliente(models.Model):
     endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE) ##mudei
     telefone = models.CharField(max_length=255)
 
     def __str__(self):
@@ -26,9 +25,9 @@ class Cliente(models.Model):
 
 class Empresa(models.Model):
     endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  ##mudei
     nome = models.CharField(max_length=255, blank=True)
-    produto = models.ManyToManyField('Produto', blank=True)
+    produtos = models.ManyToManyField('Produto', blank=True)   ##se mudar para produto melhora o gerenciamento
     descricao = models.TextField(blank=True)
     cnpj = models.CharField(max_length=255, blank=True)
     tipo = models.CharField(max_length=255, blank=True)
@@ -49,13 +48,19 @@ class Produto(models.Model):
     def __str__(self):
         return self.nome
 
+    def get_json(self):
+        return dict(
+            nome = self.nome
+        )
+
+
 class Pedido(models.Model):
 
     PAGAMENTO_CHOICES = (('Dinheiro', 'Dinheiro'), ('Cartão', 'Cartão'), ('picpay','Picpay' ),('pix', 'Pix'),('transferencia', 'Trasferencia'))
 
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
-    produto = models.ManyToManyField(Produto)
+    produtos = models.ManyToManyField(Produto)
     form_pagamento = models.CharField(max_length=255, choices=PAGAMENTO_CHOICES)
     quantidade = models.IntegerField()
     valor = models.FloatField()
@@ -67,5 +72,5 @@ class Pedido(models.Model):
 
     def get_json(self):
         return dict(
-            nome = self.cliente.user.username
+            nome = self.nome
         )
