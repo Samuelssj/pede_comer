@@ -2,6 +2,13 @@ from django.db import models
 from django.contrib.auth.models import User
 
 # Create your models here
+from rest_framework.authtoken.models import Token
+
+#
+# class user(models.Model):
+#     token, _ = Token.objects.get_or_create(user=user)
+#
+
 
 class Endereco(models.Model):
 
@@ -17,20 +24,27 @@ class Endereco(models.Model):
 
 class Cliente(models.Model):
     endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE)
+    # nome = models.CharField(max_length=255, blank=True)  #perguntar
     user = models.OneToOneField(User, on_delete=models.CASCADE) ##mudei
+    # token = Token.objects.get_or_create(user=user, on_delete=models.CASCADE)
     telefone = models.CharField(max_length=255)
+
+
 
     def __str__(self):
         return self.user.username
 
 class Empresa(models.Model):
+
     endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE)
     user = models.OneToOneField(User, on_delete=models.CASCADE)  ##mudei
     nome = models.CharField(max_length=255, blank=True)
-    produtos = models.ManyToManyField('Produto', blank=True)   ##se mudar para produto melhora o gerenciamento
+    # produtos = models.ManyToManyField('Produto', blank=True)   ##se mudar para produto melhora o gerenciamento
     descricao = models.TextField(blank=True)
     cnpj = models.CharField(max_length=255, blank=True)
     tipo = models.CharField(max_length=255, blank=True)
+
+
 
     def __str__(self):
         return self.nome
@@ -38,7 +52,9 @@ class Empresa(models.Model):
 class Produto(models.Model):
 
     nome = models.CharField(max_length=255)
+    #image = models.FileField(upload_to='Produto/', null=True, blank=True)
     descricao = models.CharField(max_length=255,blank= True)
+    empresa = models.ForeignKey(Empresa,related_name='produtos', on_delete=models.CASCADE)
     marca = models.CharField(max_length=255)
     quantidade = models.IntegerField()
     tempo_preparo = models.CharField(max_length=255,blank= True)

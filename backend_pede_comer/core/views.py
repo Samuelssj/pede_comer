@@ -1,52 +1,80 @@
-from rest_framework.views import APIView
+from django.http import JsonResponse
+from rest_framework import generics
+from rest_framework.generics import get_object_or_404
+
+#versão2
+from rest_framework import viewsets  #versão2
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import Produto,Pedido,Endereco,Empresa,Cliente
 from .serializers import ProdutoSerializer,PedidoSerializer,EnderecoSerializer,EmpresaSerializer,ClienteSerializer
 
-
-class ProdutoAPIView(APIView):
-    """ PRODUTOS APIVIEW    """
-    def get(self, request):
-        produtos = Produto.objects.all()
-        serializer = ProdutoSerializer(produtos, many=True)
-        return Response(serializer.data)
+from django.contrib.auth.backends import BaseBackend
+from django.contrib.auth import  get_user_model
+from django.db.models import Q
 
 
 
-class PedidoAPIView(APIView):
-    """ PEDIDO APIVIEW    """
-    def get(self, request):
-        pedidos = Pedido.objects.all()
-        serializer = PedidoSerializer(pedidos, many=True)
-        return Response(serializer.data)
+'''
+VERSÂO 1 rotas manuais isso tudo aqui e a rota manual
+'''
 
-
-class EnderecoAPIView(APIView):
-    """ ENDERECO APIVIEW    """
-    def get(self, request):
-        enderecos = Endereco.objects.all()
-        serializer = EnderecoSerializer(enderecos, many=True)
-        return Response(serializer.data)
-
-
-class EmpresaAPIView(APIView):
-    """ EMPRESA APIVIEW    """
-    def get(self, request):
-        empressas = Empresa.objects.all()
-        serializer = EmpresaSerializer(empressas, many=True)
-        return Response(serializer.data)
-
-
-class ClienteAPIView(APIView):
-    """ CLIENTE APIVIEW    """
-    def get(self, request):
-        clientes = Cliente.objects.all()
-        serializer = ClienteSerializer(clientes, many=True)
-        return Response(serializer.data)
+class ProdutosAPIView(generics.ListCreateAPIView):
+    queryset = Produto.objects.all()
+    serializer_class = ProdutoSerializer
 
 
 
+class ProdutoAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Produto.objects.all()
+    serializer_class = ProdutoSerializer
+
+
+
+class PedidosAPIView(generics.ListCreateAPIView):
+    queryset = Pedido.objects.all()
+    serializer_class = PedidoSerializer
+
+class PedidoAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Pedido.objects.all()
+    serializer_class = PedidoSerializer
+
+
+class EnderecosAPIView(generics.ListCreateAPIView):
+    queryset = Endereco.objects.all()
+    serializer_class = EnderecoSerializer
+
+class EnderecoAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Endereco.objects.all()
+    serializer_class = EnderecoSerializer
+
+class EmpresasAPIView(generics.ListCreateAPIView):
+    queryset = Empresa.objects.all()
+    serializer_class = EmpresaSerializer
+
+    def get_queryset(self):
+        if self.kwargs.get('empresa_pk'):
+            return self.queryset.filter(produto_id=self.kwargs.get('empresa_pk'))
+        return self.queryset.all()
+
+
+class EmpresaAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Empresa.objects.all()
+    serializer_class = EmpresaSerializer
+
+
+class ClientesAPIView(generics.ListCreateAPIView):
+    queryset = Cliente.objects.all()
+    serializer_class = ClienteSerializer
+
+class ClienteAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Cliente.objects.all()
+    serializer_class = ClienteSerializer
+
+
+
+def verificar_login(request):
 
 
 
@@ -54,50 +82,42 @@ class ClienteAPIView(APIView):
 
 
 
+    dados = {
+        'flag': False,
+        # 'produtos': produtos
+    }
+    return JsonResponse(dados,status=200)
 
 
-#forma sem rest Framework
+"""
+VERSÂO 2 VIEWSETS 
+"""
+
+class ProdutoViewSet(viewsets.ModelViewSet):
+    queryset = Produto.objects.all()
+    serializer_class = ProdutoSerializer
+
+
+class PedidoViewSet(viewsets.ModelViewSet):
+    queryset = Pedido.objects.all()
+    serializer_class = PedidoSerializer
+
+class EnderecoViewSet(viewsets.ModelViewSet):
+    queryset = Endereco.objects.all()
+    serializer_class = EnderecoSerializer
+
+class EmpresaViewSet(viewsets.ModelViewSet):
+    queryset = Empresa.objects.all()
+    serializer_class = EmpresaSerializer
+
+    @action(detail=True, methods=['get'])
+    def produtos(self,request,pk=None):
+        empresa = self.get_object()
+        seralizer = ProdutoSerializer(empresa.produtos.all(), many=True)
+        return Response(seralizer.data)
 
 
 
-
-# from django.http import JsonResponse
-# from django.shortcuts import render, redirect
-# from core.models import Produto
-# # Create your views here.
-#
-#
-#
-# def verificar_login(request):
-#     print('listando')
-#     produtos = Produto.objects.all()
-#     produtos = [produto.get_json() for produto in produtos]
-#     dados = {
-#         'flag': False,
-#         'produtos': produtos
-#     }
-#     return JsonResponse(dados)
-#
-# def list_produto(request):
-#     print('listando')
-#     produtos = Produto.objects.all()
-#     produtos = [produto.get_json() for produto in produtos]
-#     dados = {
-#         'flag': True,
-#         'produtos': produtos
-#     }
-#     return JsonResponse(dados)
-#
-#
-
-
-# def create_produto(request):
-#     form = ProdutoForm(request.POST or None)
-#     if form.is_valid():
-#         form.save()
-#         return redirect('list_produto')
-#
-#     return
-#
-#
-#     return True;
+class ClienteViewSet(viewsets.ModelViewSet):
+    queryset = Cliente.objects.all()
+    serializer_class = ClienteSerializer
